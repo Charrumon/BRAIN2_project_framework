@@ -69,7 +69,7 @@ def average_norms (multiple_norm):
         length = len(multiple_norm[current_set])
         if length > maximum_length:
             maximum_length = length
-
+    print (maximum_length)
     mean_set = np.zeros(maximum_length)
     std_set = np.zeros(maximum_length)
 
@@ -77,9 +77,12 @@ def average_norms (multiple_norm):
     for index in range(maximum_length):
         running_set = []
         for current_set in multiple_norm:
-            running_set.append(multiple_norm[current_set][index])
+            if index <= len(current_set):
+                running_set.append(multiple_norm[current_set][index])
+        print (running_set)        
         mean_set[index] = np.mean(running_set)
         std_set[index] = np.std(running_set)
+
     return mean_set, std_set
 
 
@@ -92,20 +95,24 @@ def plot_every_dataset (datasets):
     fig, axis = plt.subplots(nrows = rows, ncols = columns)
 
     plt.axis('off')
+    
+    titles = title_cleaner (datasets)
 
     for index in range(len(datasets)):
         column = (index % columns)
         row = index // columns
         data = list(datasets.values())[index]
         axis[row, column].plot(range(len(data)), data)
-        axis[row, column].set_title(list(datasets)[index])
-    plt.subplots_adjust(top= .95, right = .98, wspace = .22, left = .083, hspace = .27)
+        axis[row, column].set_title(titles[index])
+    plt.subplots_adjust(top= .86, right = .98, wspace = .22, left = .083, hspace = .27)
+    plt.suptitle("normalized data of each dataset")
     plt.show()
 
 
 
 def plot_mean_dataset (multiple_norm):
     mean_dataset, std_dataset = average_norms(multiple_norm)
+    print (mean_dataset)
     x = range(len(mean_dataset))
 
     plt.plot(x, mean_dataset)
@@ -114,18 +121,40 @@ def plot_mean_dataset (multiple_norm):
     plt.fill_between(x, mean_dataset - std_dataset, mean_dataset + std_dataset, alpha = .3)
     plt.show()
 
+def title_cleaner (multiple_norm):
+    titles = list(multiple_norm)
+    
+    for i in range(len(titles)):
+        titles [i] = titles [i].replace ("d", "day ")
+        titles [i] = titles [i].replace ("W", "Wildtype ")
+        titles [i] = titles [i].replace ("M", "Mutant ")
+        titles [i] = titles [i].replace ("_", " ")
+        titles [i] = titles [i].replace (".csv", "")
 
+    return titles
 
 def plot_corr_matrix (multiple_norm):
-    all_data = []
-    for point in multiple_norm:
-        all_data.append(multiple_norm[point])
-    matrix = np.corrcoef(all_data)
-    plt.imshow(matrix, cmap ='hot')
-    plt.xticks(range(len(multiple_norm)), list(multiple_norm))
-    plt.yticks(range(len(multiple_norm)), list(multiple_norm))
+    all_data = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in multiple_norm.items() ]))
+    matrix = all_data.corr()
+
+    #masking data here to get rid of symmetric redundancy
+    lower_mask = np.tri(matrix.shape[0], matrix.shape[1], k=-1)
+    masked_matrix = np.ma.array(matrix, mask = lower_mask)
+
+    plt.imshow(masked_matrix, cmap ='cividis')
+    norm_axes = range(len(multiple_norm))
+    labels = title_cleaner (multiple_norm)
+    plt.xticks(norm_axes, labels)
+    plt.yticks(norm_axes, labels)
+    for y in norm_axes:
+        for x in norm_axes:
+            point_value = masked_matrix[x,y]
+            if isinstance(point_value,np.float64):
+                plt.text(y,x,round(point_value,6), ha="center", va="center")
+        
     plt.subplots_adjust(bottom = .064 , top = .926)
     plt.title("correlation matrix heatmap between given datasets")
+    plt.text(-0.2, matrix.shape[0]-1, "R values are \n between 1 and -1", ha="left", bbox={'facecolor': 'white', 'pad': 8})
     plt.show()
 
 
@@ -143,14 +172,14 @@ normalized_mean_datasets = oddevennormal(base_datasets, 2)
 
 
 #plots each of the individual datasets
-#plot_every_dataset(normalized_mean_datasets)
+plot_every_dataset(normalized_mean_datasets)
 
 
 #plots the average dataset, with standard deviation
-#plot_mean_dataset(normalized_mean_datasets)
+plot_mean_dataset(normalized_mean_datasets)
 
 #plots the correlation matrix
-plot_corr_matrix(normalized_mean_datasets)
+#plot_corr_matrix(normalized_mean_datasets)
 
 
 
