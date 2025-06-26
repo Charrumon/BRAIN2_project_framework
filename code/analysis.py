@@ -96,11 +96,13 @@ def plot_every_dataset (datasets):
     if len(datasets)%3 != 0 : rows += 1
     fig, axis = plt.subplots(nrows = rows, ncols = columns, squeeze = False)
 
-    print (len(datasets))
-    print (rows*3)
-    empty = (rows*3) - len(datasets)
-    print (empty)
-    #plt.axis('off')
+    if len(datasets) > 3:
+        empty = (rows*3) - len(datasets)
+        for point in range(empty):
+            print(3-point-1)
+            print(rows-1)
+            axis[rows-1, 3-point-1].axis('off')
+
     
     titles = title_cleaner (datasets)
 
