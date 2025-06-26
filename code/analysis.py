@@ -90,17 +90,23 @@ def average_norms (multiple_norm):
 def plot_every_dataset (datasets):
     #takes a dict of file names and data and graphs each
 
-    rows = len(datasets)//2
-    columns = rows + (len(datasets) % 2)
-    fig, axis = plt.subplots(nrows = rows, ncols = columns)
+    rows = len(datasets)//3
+    if rows == 0: columns = len(datasets) 
+    else: columns = 3
+    if len(datasets)%3 != 0 : rows += 1
+    fig, axis = plt.subplots(nrows = rows, ncols = columns, squeeze = False)
 
-    plt.axis('off')
+    print (len(datasets))
+    print (rows*3)
+    empty = (rows*3) - len(datasets)
+    print (empty)
+    #plt.axis('off')
     
     titles = title_cleaner (datasets)
 
     for index in range(len(datasets)):
-        column = (index % columns)
-        row = index // columns
+        column = (index % 3)
+        row = index // 3
         data = list(datasets.values())[index]
         axis[row, column].plot(range(len(data)), data)
         axis[row, column].set_title(titles[index])
@@ -176,7 +182,7 @@ plot_every_dataset(normalized_mean_datasets)
 
 
 #plots the average dataset, with standard deviation
-plot_mean_dataset(normalized_mean_datasets)
+#plot_mean_dataset(normalized_mean_datasets)
 
 #plots the correlation matrix
 #plot_corr_matrix(normalized_mean_datasets)
